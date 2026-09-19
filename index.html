@@ -125,20 +125,21 @@ table.tt th{
   background:var(--surface-2);white-space:nowrap;
 }
 table.tt th.today{color:var(--accent)}
+table.tt tbody tr{height:38px}
 table.tt td{border-bottom:1px solid var(--line-soft);border-left:1px solid var(--line-soft);padding:0;vertical-align:top}
+table.tt td.les{
+  background:color-mix(in srgb, var(--c) 11%, var(--surface));
+  border-left:3px solid var(--c);vertical-align:top;
+}
 table.tt td.time{
   border-left:0;padding:6px 10px;white-space:nowrap;
   font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3);
   background:var(--surface-2);width:1%;
 }
-.lesson{
-  height:100%;padding:8px 9px;border-left:3px solid var(--c);
-  background:color-mix(in srgb, var(--c) 11%, var(--surface));
-  display:flex;flex-direction:column;gap:2px;min-height:42px;
-}
+.lesson{padding:8px 9px;display:flex;flex-direction:column;gap:2px}
 .lesson b{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:13.5px;font-weight:600;line-height:1.2}
 .lesson span{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-3);letter-spacing:.03em}
-.lesson.free-mark{background:none;border-left:3px dashed var(--line)}
+
 .freecell{padding:8px 9px;color:var(--ink-3);font-size:11.5px;font-style:italic}
 
 /* week summary */
@@ -778,7 +779,7 @@ function viewTimetable(){
       if (c.k === null){ html += `<td></td>`; continue; }
       const s = SMAP[baseId(c.k)], lab = c.k.endsWith("*");
       const from = SLOTS[i][0], to = SLOTS[i + c.span - 1][1];
-      html += `<td rowspan="${c.span}"><div class="lesson" style="--c:${s.color}">
+      html += `<td class="les" rowspan="${c.span}" style="--c:${s.color}"><div class="lesson">
         <b>${esc(s.name)}${lab ? " · Labor" : ""}</b>
         <span>${from}–${to} · ${c.span} Lekt.</span>
       </div></td>`;
