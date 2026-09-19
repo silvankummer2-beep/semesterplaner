@@ -1,0 +1,1129 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Stundenplan, Lernplanung und Semesterfortschritt Bauingenieurwesen HS 2026">
+<meta name="theme-color" content="#eceff3" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#0e1318" media="(prefers-color-scheme: dark)">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns=%27http://www.w3.org/2000/svg%27 viewBox=%270 0 32 32%27%3E%3Crect width=%2732%27 height=%2732%27 rx=%276%27 fill=%27%231b5fa8%27/%3E%3Crect x=%276%27 y=%279%27 width=%2720%27 height=%272.5%27 fill=%27white%27/%3E%3Crect x=%276%27 y=%2714.7%27 width=%2720%27 height=%272.5%27 fill=%27white%27 opacity=%27.75%27/%3E%3Crect x=%276%27 y=%2720.4%27 width=%2712%27 height=%272.5%27 fill=%27white%27 opacity=%27.5%27/%3E%3C/svg%3E">
+<title>Semesterplaner Bauingenieur</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --paper:#eceff3;
+  --surface:#ffffff;
+  --surface-2:#f5f7f9;
+  --line:#d3dae1;
+  --line-soft:#e3e8ed;
+  --ink:#141b22;
+  --ink-2:#46545f;
+  --ink-3:#77858f;
+  --accent:#1b5fa8;
+  --accent-soft:#e3edf7;
+  --plan:#b5791c;
+  --done:#2c7a56;
+  --over:#b2412c;
+  --shadow:0 1px 2px rgba(20,32,44,.07), 0 6px 18px rgba(20,32,44,.05);
+  --r:10px;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#0e1318;
+    --surface:#161d24;
+    --surface-2:#1c242c;
+    --line:#2b3641;
+    --line-soft:#232c35;
+    --ink:#e4ebf1;
+    --ink-2:#a3b1bd;
+    --ink-3:#7d8b97;
+    --accent:#63a4e6;
+    --accent-soft:#1c2b3a;
+    --plan:#d3a04a;
+    --done:#4fa87c;
+    --over:#e0765c;
+    --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 20px rgba(0,0,0,.28);
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#0e1318;
+  --surface:#161d24;
+  --surface-2:#1c242c;
+  --line:#2b3641;
+  --line-soft:#232c35;
+  --ink:#e4ebf1;
+  --ink-2:#a3b1bd;
+  --ink-3:#7d8b97;
+  --accent:#63a4e6;
+  --accent-soft:#1c2b3a;
+  --plan:#d3a04a;
+  --done:#4fa87c;
+  --over:#e0765c;
+  --shadow:0 1px 2px rgba(0,0,0,.4), 0 8px 20px rgba(0,0,0,.28);
+}
+*{box-sizing:border-box}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  font-size:14px;line-height:1.45;
+  -webkit-font-smoothing:antialiased;
+}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",Arial,sans-serif;margin:0;text-wrap:balance}
+.num{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:1120px;margin:0 auto;padding-inline:16px;padding-block:0 48px}
+
+/* header */
+.top{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:20;
+  background:color-mix(in srgb, var(--paper) 88%, transparent);
+  backdrop-filter:blur(10px);
+  border-bottom:1px solid var(--line-soft);
+}
+.top-in{max-width:1120px;margin:0 auto;padding:12px 16px 0}
+.brandrow{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+h1{font-size:21px;font-weight:700;letter-spacing:-.01em}
+.sub{color:var(--ink-3);font-size:12px;letter-spacing:.06em;text-transform:uppercase}
+.weeknav{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.wbtn{
+  width:32px;height:32px;border:1px solid var(--line);background:var(--surface);
+  color:var(--ink);border-radius:8px;cursor:pointer;font-size:15px;line-height:1;
+  display:grid;place-items:center;
+}
+.wbtn:hover{border-color:var(--accent);color:var(--accent)}
+.wbtn:disabled{opacity:.35;cursor:default}
+.wlabel{display:flex;flex-direction:column;min-width:190px}
+.wlabel b{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:16px;font-weight:600}
+.wlabel span{font-size:12px;color:var(--ink-3)}
+.pill{
+  font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.04em;
+  padding:3px 8px;border-radius:99px;border:1px solid var(--line);color:var(--ink-2);
+  background:var(--surface);
+}
+.pill.a{border-color:var(--accent);color:var(--accent);background:var(--accent-soft)}
+.tabs{display:flex;gap:2px;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+  border:0;background:none;color:var(--ink-3);cursor:pointer;
+  font-family:"IBM Plex Sans Condensed",sans-serif;font-size:15px;font-weight:600;
+  padding:8px 12px 10px;border-bottom:2px solid transparent;white-space:nowrap;
+}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tab:hover{color:var(--ink)}
+
+section{margin-top:22px}
+.sechead{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:10px}
+.sechead h2{font-size:17px;font-weight:600}
+.hint{color:var(--ink-3);font-size:12.5px;max-width:62ch}
+
+/* timetable */
+.scroller{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
+table.tt{border-collapse:collapse;width:100%;min-width:720px}
+table.tt th{
+  font-family:"IBM Plex Sans Condensed",sans-serif;font-size:13px;font-weight:600;
+  text-align:left;padding:10px 10px;border-bottom:1px solid var(--line);color:var(--ink-2);
+  background:var(--surface-2);white-space:nowrap;
+}
+table.tt th.today{color:var(--accent)}
+table.tt td{border-bottom:1px solid var(--line-soft);border-left:1px solid var(--line-soft);padding:0;vertical-align:top}
+table.tt td.time{
+  border-left:0;padding:6px 10px;white-space:nowrap;
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3);
+  background:var(--surface-2);width:1%;
+}
+.lesson{
+  height:100%;padding:8px 9px;border-left:3px solid var(--c);
+  background:color-mix(in srgb, var(--c) 11%, var(--surface));
+  display:flex;flex-direction:column;gap:2px;min-height:42px;
+}
+.lesson b{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:13.5px;font-weight:600;line-height:1.2}
+.lesson span{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-3);letter-spacing:.03em}
+.lesson.free-mark{background:none;border-left:3px dashed var(--line)}
+.freecell{padding:8px 9px;color:var(--ink-3);font-size:11.5px;font-style:italic}
+
+/* week summary */
+.bars{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:10px}
+.stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow)}
+.stat .k{font-size:11px;text-transform:uppercase;letter-spacing:.07em;color:var(--ink-3)}
+.stat .v{font-family:"IBM Plex Mono",monospace;font-size:22px;font-weight:500;margin-top:2px}
+.stat .v small{font-size:12px;color:var(--ink-3)}
+.meter{height:5px;border-radius:99px;background:var(--line-soft);margin-top:9px;overflow:hidden;display:flex}
+.meter i{display:block;height:100%}
+.meter i.d{background:var(--done)}
+.meter i.p{background:var(--plan)}
+.meter i.o{background:var(--over)}
+
+/* subject rows */
+.subjlist{display:grid;gap:6px;margin-top:12px}
+.srow{
+  display:grid;grid-template-columns:24px minmax(150px,1fr) 150px 96px 150px;align-items:center;gap:12px;
+  background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--c);
+  border-radius:8px;padding:8px 12px;
+}
+.srow.is-done{background:color-mix(in srgb, var(--done) 8%, var(--surface))}
+.srow.is-none{background:color-mix(in srgb, var(--accent) 8%, var(--surface))}
+.srow.is-skip{background:color-mix(in srgb, var(--over) 8%, var(--surface))}
+.srow .nm{font-weight:500}
+.srow .nm em{font-style:normal;color:var(--ink-3);font-size:12px}
+.srow .hrs{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-2);text-align:right;white-space:nowrap}
+.chk{
+  width:20px;height:20px;border-radius:6px;border:1.5px solid var(--line);background:var(--surface);
+  cursor:pointer;display:grid;place-items:center;padding:0;color:transparent;font-size:12px;line-height:1;
+}
+.chk[aria-pressed="true"]{background:var(--done);border-color:var(--done);color:#fff}
+.chk:hover{border-color:var(--done)}
+
+/* Statusfeld: offen / in Arbeit / abgeschlossen / nichts zu tun / nicht gemacht */
+.badge{
+  width:23px;height:23px;border-radius:6px;border:1.5px solid var(--line);background:var(--surface);
+  display:grid;place-items:center;font-size:12px;line-height:1;color:transparent;
+}
+.badge.part{background:var(--plan);border-color:var(--plan);color:#fff;font-size:9px}
+.badge.done{background:var(--done);border-color:var(--done);color:#fff}
+.badge.none{background:var(--accent);border-color:var(--accent);color:transparent}
+.badge.skip{background:var(--over);border-color:var(--over);color:#fff}
+input[type=range]{
+  -webkit-appearance:none;appearance:none;width:100%;height:20px;background:none;cursor:pointer;margin:0;
+}
+input[type=range]::-webkit-slider-runnable-track{height:5px;border-radius:99px;background:var(--line-soft)}
+input[type=range]::-moz-range-track{height:5px;border-radius:99px;background:var(--line-soft)}
+input[type=range]::-webkit-slider-thumb{
+  -webkit-appearance:none;width:15px;height:15px;border-radius:50%;margin-top:-5px;
+  background:var(--surface);border:2px solid var(--c, var(--accent));box-shadow:0 1px 2px rgba(0,0,0,.25);
+}
+input[type=range]::-moz-range-thumb{
+  width:15px;height:15px;border-radius:50%;background:var(--surface);
+  border:2px solid var(--c, var(--accent));box-shadow:0 1px 2px rgba(0,0,0,.25);
+}
+input[type=range]:disabled{opacity:.4;cursor:default}
+select.status{width:100%}
+
+/* days */
+.days{display:grid;grid-template-columns:repeat(auto-fit,minmax(178px,1fr));gap:10px;margin-top:12px}
+.day{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:11px 12px 12px;display:flex;flex-direction:column;gap:9px;box-shadow:var(--shadow)}
+.day.over{border-color:var(--over)}
+.dayhead{display:flex;align-items:baseline;justify-content:space-between;gap:8px}
+.dayhead b{font-family:"IBM Plex Sans Condensed",sans-serif;font-size:14px;font-weight:600}
+.dayhead .cap{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3)}
+.dayhead .cap.over{color:var(--over)}
+.sess{
+  display:grid;grid-template-columns:20px 1fr auto auto;align-items:center;gap:7px;
+  border-left:3px solid var(--c);background:color-mix(in srgb, var(--c) 10%, var(--surface));
+  border-radius:6px;padding:5px 7px;font-size:12.5px;
+}
+.sess.done .lbl{text-decoration:line-through;color:var(--ink-3)}
+.sess .lbl{overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sess .h{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-2)}
+.x{border:0;background:none;color:var(--ink-3);cursor:pointer;font-size:14px;line-height:1;padding:2px 3px;border-radius:4px}
+.x:hover{color:var(--over);background:color-mix(in srgb, var(--over) 12%, transparent)}
+.addrow{display:flex;gap:5px;margin-top:auto}
+.addrow select{flex:1;min-width:0}
+.empty{color:var(--ink-3);font-size:12px;font-style:italic;padding:2px 0}
+.lect{font-family:"IBM Plex Mono",monospace;font-size:10.5px;color:var(--ink-3);letter-spacing:.02em}
+
+select,input[type=number]{
+  font-family:inherit;font-size:12.5px;color:var(--ink);background:var(--surface-2);
+  border:1px solid var(--line);border-radius:6px;padding:5px 6px;
+}
+input[type=number]{font-family:"IBM Plex Mono",monospace;width:56px}
+select:focus-visible,input:focus-visible,button:focus-visible,.tab:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{
+  font-family:"IBM Plex Sans Condensed",sans-serif;font-size:13px;font-weight:600;
+  border:1px solid var(--line);background:var(--surface);color:var(--ink);
+  border-radius:7px;padding:6px 11px;cursor:pointer;
+}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.primary:hover{filter:brightness(1.08);color:#fff}
+.btn.mini{padding:5px 9px;font-size:12px}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap}
+
+/* Prüfungen & Abgaben */
+.exform{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;align-items:end;
+  background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:12px 14px;box-shadow:var(--shadow);
+}
+.exform label{display:flex;flex-direction:column;gap:4px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.exform select,.exform input{width:100%}
+.exlist{display:grid;gap:6px;margin-top:12px}
+.exrow{
+  display:grid;grid-template-columns:168px 152px minmax(140px,1fr) 148px 30px;gap:10px;align-items:center;
+  background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--t);
+  border-radius:8px;padding:8px 10px;
+}
+.exrow.past{opacity:.5}
+.exrow .when{font-family:"IBM Plex Mono",monospace;font-size:11.5px;color:var(--ink-3);white-space:nowrap}
+.exrow .when b{display:block;color:var(--ink);font-size:12.5px;font-weight:500}
+.exrow input[type=date],.exrow select{width:100%;font-size:12.5px}
+.exrow input[type=date]{font-family:"IBM Plex Mono",monospace}
+.tag{
+  display:inline-flex;align-items:center;gap:5px;border-radius:99px;padding:2px 9px;
+  font-family:"IBM Plex Sans Condensed",sans-serif;font-size:11.5px;font-weight:600;
+  background:color-mix(in srgb,var(--t) 16%, var(--surface));color:var(--t);border:1px solid color-mix(in srgb,var(--t) 40%,transparent);
+  white-space:nowrap;
+}
+.weekex{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.weekex .tag{font-size:12px;padding:4px 11px}
+.weekex .tag span{font-family:"IBM Plex Mono",monospace;font-weight:400;opacity:.85}
+th .tag{margin-top:4px;display:inline-flex}
+.exempty{color:var(--ink-3);font-size:12.5px;font-style:italic;padding:14px 2px}
+@media (max-width:760px){
+  .exrow{grid-template-columns:1fr 1fr 30px;row-gap:8px}
+  .exrow .when{grid-column:1 / span 2}
+}
+
+/* semester grid */
+.grid-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
+table.sem{border-collapse:collapse;min-width:720px;width:100%}
+table.sem th{font-size:11px;font-weight:600;color:var(--ink-3);padding:8px 4px;background:var(--surface-2);border-bottom:1px solid var(--line);font-family:"IBM Plex Mono",monospace}
+table.sem th.snm{text-align:left;padding-left:12px;font-family:"IBM Plex Sans Condensed",sans-serif;font-size:12.5px;color:var(--ink-2)}
+table.sem td{padding:3px;text-align:center;border-bottom:1px solid var(--line-soft)}
+table.sem td.snm{text-align:left;padding:5px 12px;border-left:3px solid var(--c);font-size:13px;white-space:nowrap}
+table.sem th.now, table.sem td.now{background:var(--accent-soft)}
+.cell{
+  width:22px;height:22px;border-radius:5px;border:1.5px solid var(--line);
+  margin:0 auto;display:grid;place-items:center;font-size:11px;color:transparent;cursor:pointer;padding:0;background:var(--surface);
+}
+.cell.plan{border-color:var(--plan);background:color-mix(in srgb, var(--plan) 20%, var(--surface))}
+.cell.part{background:var(--plan);border-color:var(--plan);color:#fff;font-size:8px}
+.cell.done{background:var(--done);border-color:var(--done);color:#fff}
+.cell.none{background:var(--accent);border-color:var(--accent);color:transparent}
+.cell.skip{background:var(--over);border-color:var(--over);color:#fff}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12px;color:var(--ink-3);align-items:center}
+.legend i{width:13px;height:13px;border-radius:4px;display:inline-block;vertical-align:-2px;margin-right:5px;border:1.5px solid var(--line)}
+.legend i.plan{border-color:var(--plan);background:color-mix(in srgb,var(--plan) 20%,var(--surface))}
+.legend i.part{background:var(--plan);border-color:var(--plan)}
+.legend i.done{background:var(--done);border-color:var(--done)}
+.legend i.none{background:var(--accent);border-color:var(--accent)}
+.legend i.skip{background:var(--over);border-color:var(--over)}
+
+/* settings */
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:14px}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px 16px;box-shadow:var(--shadow)}
+.card h3{font-size:14.5px;font-weight:600;margin-bottom:3px}
+.card .hint{margin-bottom:12px}
+.setrow{display:grid;grid-template-columns:14px 1fr 70px;align-items:center;gap:10px;padding:5px 0;border-bottom:1px solid var(--line-soft)}
+.setrow:last-child{border-bottom:0}
+.swatch{width:11px;height:11px;border-radius:3px;background:var(--c)}
+.setrow .lbl{font-size:13px}
+.setrow .lbl small{display:block;color:var(--ink-3);font-family:"IBM Plex Mono",monospace;font-size:10.5px}
+.totalrow{display:flex;justify-content:space-between;margin-top:12px;padding-top:10px;border-top:1px solid var(--line);font-family:"IBM Plex Mono",monospace;font-size:12.5px;color:var(--ink-2)}
+.saveflag{font-size:11.5px;color:var(--ink-3);font-family:"IBM Plex Mono",monospace}
+footer{margin-top:30px;color:var(--ink-3);font-size:11.5px;border-top:1px solid var(--line-soft);padding-top:12px}
+@media (max-width:760px){
+  .srow{grid-template-columns:24px 1fr 86px;row-gap:8px}
+  .srow .slider{grid-column:1 / -1;order:3}
+  .srow .status{grid-column:1 / -1;order:4}
+}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Basis-Reset (im Artifact vom Host gestellt, hier Teil der Seite) */
+html{color-scheme:light dark}
+img{max-width:100%}
+[hidden]{display:none!important}
+:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+</style>
+</head>
+<body>
+
+<div class="top">
+  <div class="top-in">
+    <div class="brandrow">
+      <h1>Semesterplaner</h1>
+      <div class="sub">Bauingenieurwesen · HS 2026 · 14 Wochen</div>
+    </div>
+    <div class="weeknav">
+      <button class="wbtn" id="prev" aria-label="Woche zurück">‹</button>
+      <button class="wbtn" id="next" aria-label="Woche vor">›</button>
+      <div class="wlabel"><b id="wtitle">Woche 1</b><span id="wdates" class="num"></span></div>
+      <span class="pill a" id="wtype">Turnus A</span>
+      <span class="pill" id="wnow" hidden>aktuelle Woche</span>
+      <span class="saveflag" id="saveflag"></span>
+    </div>
+    <div class="tabs" role="tablist">
+      <button class="tab" role="tab" data-tab="plan" aria-selected="true">Lernplan</button>
+      <button class="tab" role="tab" data-tab="stundenplan" aria-selected="false">Stundenplan</button>
+      <button class="tab" role="tab" data-tab="pruefungen" aria-selected="false">Prüfungen &amp; Abgaben</button>
+      <button class="tab" role="tab" data-tab="semester" aria-selected="false">Semester</button>
+      <button class="tab" role="tab" data-tab="setup" aria-selected="false">Fächer &amp; Zeit</button>
+    </div>
+  </div>
+</div>
+
+<div class="wrap">
+  <div id="view-plan"></div>
+  <div id="view-stundenplan" hidden></div>
+  <div id="view-pruefungen" hidden></div>
+  <div id="view-semester" hidden></div>
+  <div id="view-setup" hidden></div>
+  <footer>Semesterstart Mo 14.09.2026 · Turnus A = ungerade Wochen (Baustatik-Doppel am Montagabend, Verkehrswesen 4 Lektionen am Donnerstag), Turnus B = gerade Wochen (Massivbau-Doppel, Stahlbau 4 Lektionen).</footer>
+</div>
+
+<script>
+/* ---------- Daten ---------- */
+const START = new Date(2026, 8, 14);      // Mo 14.09.2026
+const WEEKS = 14;
+const DAYS = ["Montag","Dienstag","Mittwoch","Donnerstag","Freitag","Samstag","Sonntag"];
+const DAYS_S = ["Mo","Di","Mi","Do","Fr","Sa","So"];
+
+const SUBJECTS = [
+  {id:"bs3", name:"Baustatik 3",               abbr:"BS3",  color:"#2f6fb0", effort:3},
+  {id:"mb1", name:"Massivbau 1",               abbr:"MB1",  color:"#7a58bd", effort:3},
+  {id:"swb", name:"Siedlungswasserbau 1",      abbr:"SWB1", color:"#1c8585", effort:3},
+  {id:"hb1", name:"Holzbau 1",                 abbr:"HB1",  color:"#a9702a", effort:3},
+  {id:"wb1", name:"Wasserbau 1",               abbr:"WB1",  color:"#2a86bd", effort:3},
+  {id:"vm1", name:"Vermessung 1",              abbr:"VM1",  color:"#66882a", effort:1.5},
+  {id:"vw1", name:"Verkehrswesen 1",           abbr:"VW1",  color:"#c05b3c", effort:2},
+  {id:"sb1", name:"Stahlbau 1",                abbr:"SB1",  color:"#5a6d7d", effort:2},
+  {id:"mt3", name:"Materialtechnologie 3",     abbr:"MT3",  color:"#a03f2d", effort:3},
+  {id:"bwl", name:"Betriebswirtschaftslehre 1",abbr:"BWL1", color:"#78762f", effort:1.5},
+  {id:"gt1", name:"Geotechnik 1",              abbr:"GT1",  color:"#3d6b4c", effort:2}
+];
+const SMAP = Object.fromEntries(SUBJECTS.map(s => [s.id, s]));
+
+const SLOTS = [
+  ["08:00","08:45"],["08:50","09:35"],["10:00","10:45"],["10:50","11:35"],
+  ["12:50","13:35"],["14:00","14:45"],["14:50","15:35"],["16:00","16:45"],
+  ["16:50","17:35"],["18:00","18:45"]
+];
+const _ = null;
+/* Turnus A = ungerade Wochen (Woche 1 = Baustatik-Doppel + Verkehrswesen 4 Lekt.) */
+function timetable(isA){
+  return [
+    /* Mo */ [_,_,_,_,"bs3","bs3","mb1","mb1", isA?"bs3":"mb1", isA?"bs3":"mb1"],
+    /* Di */ ["swb","swb","swb","swb","hb1","hb1","hb1","hb1",_,_],
+    /* Mi */ ["wb1","wb1","wb1","wb1","vm1","vm1",_,_,_,_],
+    /* Do */ isA
+      ? ["vw1","vw1","vw1","vw1","sb1","sb1","mt3","mt3","mt3","mt3"]
+      : ["vw1","vw1","sb1","sb1","sb1","sb1","mt3","mt3","mt3","mt3"],
+    /* Fr */ ["bwl","bwl","gt1","gt1","gt1*","gt1*","gt1*","gt1*",_,_],
+    /* Sa */ [_,_,_,_,_,_,_,_,_,_]
+  ];
+}
+const isAWeek = w => w % 2 === 1;
+const baseId = k => k ? k.replace("*","") : k;
+
+/* ---------- Zustand ---------- */
+/* Status pro Fach und Woche: auto = ergibt sich aus den geleisteten Stunden,
+   done = abgeschlossen, none = nichts zu tun, skip = nicht gemacht */
+const STATUS = [
+  {v:"auto", label:"Automatisch (nach Stunden)"},
+  {v:"done", label:"✓  Vollständig abgeschlossen"},
+  {v:"none", label:"■  Nichts zu tun"},
+  {v:"skip", label:"✕  Nicht gemacht"}
+];
+/* Terminarten */
+const TYPES = {
+  pruefung: {label: "Prüfung",         short: "Prüfung",     color: "var(--over)"},
+  zwischen: {label: "Zwischenprüfung", short: "Zwischenpr.", color: "var(--plan)"},
+  abgabe:   {label: "Abgabe",          short: "Abgabe",      color: "var(--accent)"}
+};
+const DEFAULTS = () => ({
+  effort: Object.fromEntries(SUBJECTS.map(s => [s.id, s.effort])),
+  cap: [4, 2, 3, 1, 2, 6, 5],
+  sessions: {},
+  prog: {},
+  exams: []
+});
+let state = DEFAULTS();
+let week = 1;
+let tab = "plan";
+const CLIENT = Math.random().toString(36).slice(2, 10);
+const LS = "semesterplaner.v1";
+
+function sanitize(raw){
+  const s = DEFAULTS();
+  if (!raw || typeof raw !== "object") return s;
+  if (raw.effort) for (const k in s.effort) if (typeof raw.effort[k] === "number") s.effort[k] = raw.effort[k];
+  if (Array.isArray(raw.cap)) s.cap = s.cap.map((v, i) => typeof raw.cap[i] === "number" ? raw.cap[i] : v);
+  if (raw.sessions && typeof raw.sessions === "object"){
+    for (const w in raw.sessions){
+      const arr = raw.sessions[w];
+      if (!Array.isArray(arr)) continue;
+      s.sessions[w] = arr.filter(x => x && SMAP[x.s] && typeof x.d === "number")
+        .map(x => ({id: String(x.id || Math.random().toString(36).slice(2,8)), d: x.d|0, s: x.s, h: Number(x.h) || 1, done: !!x.done}));
+    }
+  }
+  if (raw.prog && typeof raw.prog === "object"){
+    for (const w in raw.prog){
+      const o = raw.prog[w]; if (!o || typeof o !== "object") continue;
+      s.prog[w] = {};
+      for (const k in o){
+        if (!SMAP[k] || !o[k]) continue;
+        const st = STATUS.some(x => x.v === o[k].st) ? o[k].st : "auto";
+        s.prog[w][k] = {h: Math.max(0, Number(o[k].h) || 0), st};
+      }
+    }
+  }
+  if (Array.isArray(raw.exams)){
+    s.exams = raw.exams
+      .filter(x => x && SMAP[x.s] && TYPES[x.t] && /^\d{4}-\d{2}-\d{2}$/.test(x.date || ""))
+      .map(x => ({id: String(x.id || Math.random().toString(36).slice(2, 8)), t: x.t, s: x.s, date: x.date, note: String(x.note || "").slice(0, 120)}));
+  }
+  if (raw.done && typeof raw.done === "object"){   // Migration alter Stände
+    for (const w in raw.done){
+      const o = raw.done[w]; if (!o || typeof o !== "object") continue;
+      const t = s.prog[w] = s.prog[w] || {};
+      for (const k in o) if (SMAP[k] && o[k] && !t[k]) t[k] = {h: s.effort[k], st: "done"};
+    }
+  }
+  return s;
+}
+
+/* Speicherung: localStorage (bleibt im Browser) + optionaler Gist-Sync */
+const K_TOKEN = "semesterplaner.token", K_GIST = "semesterplaner.gist", K_AT = LS + ".at";
+const GFILE = "semesterplaner.json";
+let saveTimer = null, pushTimer = null, syncMsg = "", lastAt = 0;
+const lsGet = k => { try { return localStorage.getItem(k); } catch(e){ return null; } };
+const lsSet = (k, v) => { try { v === null ? localStorage.removeItem(k) : localStorage.setItem(k, v); } catch(e){} };
+
+try { const raw = lsGet(LS); if (raw) state = sanitize(JSON.parse(raw)); } catch(e){}
+lastAt = Number(lsGet(K_AT) || 0);
+
+const clock = () => { const d = new Date(); return pad(d.getHours()) + ":" + pad(d.getMinutes()); };
+function flag(t){ syncMsg = t; const el = document.getElementById("saveflag"); if (el) el.textContent = t; }
+function save(){
+  lastAt = Date.now();
+  try { localStorage.setItem(LS, JSON.stringify(state)); lsSet(K_AT, String(lastAt)); }
+  catch(e){ flag("Speicher voll – nicht gesichert"); return; }
+  flag(lsGet(K_TOKEN) ? "gespeichert · Sync…" : "gespeichert");
+  clearTimeout(pushTimer);
+  if (lsGet(K_TOKEN)) pushTimer = setTimeout(pushGist, 2000);
+}
+
+/* --- GitHub-Gist-Abgleich (optional) --- */
+async function gh(path, opts){
+  const token = lsGet(K_TOKEN);
+  if (!token) throw new Error("kein Token");
+  const r = await fetch("https://api.github.com" + path, Object.assign({}, opts, {
+    headers: {Accept: "application/vnd.github+json", Authorization: "Bearer " + token, "Content-Type": "application/json"}
+  }));
+  if (!r.ok) throw new Error(r.status === 401 ? "Token ungültig" : r.status === 404 ? "Gist nicht gefunden" : "HTTP " + r.status);
+  return r.json();
+}
+async function pushGist(){
+  if (!lsGet(K_TOKEN)) return;
+  const body = JSON.stringify(Object.assign({}, state, {at: lastAt}), null, 1);
+  try {
+    const id = lsGet(K_GIST);
+    if (!id){
+      const g = await gh("/gists", {method: "POST", body: JSON.stringify({
+        description: "Semesterplaner – Daten", public: false, files: {[GFILE]: {content: body}}
+      })});
+      lsSet(K_GIST, g.id);
+    } else {
+      await gh("/gists/" + id, {method: "PATCH", body: JSON.stringify({files: {[GFILE]: {content: body}}})});
+    }
+    flag("gespeichert · hochgeladen " + clock());
+  } catch(e){ flag("Sync-Fehler: " + e.message); }
+  if (tab === "setup") render();
+}
+async function pullGist(force){
+  if (!lsGet(K_TOKEN) || !lsGet(K_GIST)) return;
+  try {
+    const g = await gh("/gists/" + lsGet(K_GIST), {method: "GET"});
+    const f = g.files && g.files[GFILE];
+    if (!f) { flag("Gist enthält keine Daten"); return; }
+    const txt = f.truncated ? await (await fetch(f.raw_url)).text() : f.content;
+    const remote = JSON.parse(txt);
+    if (force || Number(remote.at || 0) > lastAt){
+      state = sanitize(remote);
+      lastAt = Number(remote.at || Date.now());
+      lsSet(LS, JSON.stringify(state)); lsSet(K_AT, String(lastAt));
+      flag("geladen " + clock());
+      render();
+      return;
+    }
+    flag("aktuell · " + clock());
+  } catch(e){ flag("Sync-Fehler: " + e.message); }
+  if (tab === "setup") render();
+}
+function exportData(){
+  const blob = new Blob([JSON.stringify(Object.assign({}, state, {at: lastAt}), null, 2)], {type: "application/json"});
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(blob);
+  a.download = "semesterplaner-" + isoOf(new Date()) + ".json";
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+}
+function importData(file){
+  const fr = new FileReader();
+  fr.onload = () => {
+    try { state = sanitize(JSON.parse(fr.result)); save(); render(); flag("importiert " + clock()); }
+    catch(e){ flag("Datei nicht lesbar"); }
+  };
+  fr.readAsText(file);
+}
+flag(lsGet(K_TOKEN) && lsGet(K_GIST) ? "Sync aktiv" : "lokal auf diesem Gerät");
+
+/* ---------- Helfer ---------- */
+const pad = n => String(n).padStart(2, "0");
+function weekStart(w){ const d = new Date(START); d.setDate(d.getDate() + (w - 1) * 7); return d; }
+function fmtDate(d, yr){ return pad(d.getDate()) + "." + pad(d.getMonth() + 1) + "." + (yr ? d.getFullYear() : ""); }
+function weekRange(w){
+  const a = weekStart(w), b = new Date(a); b.setDate(b.getDate() + 5);
+  return fmtDate(a) + " – " + fmtDate(b, true);
+}
+function currentWeek(){
+  const today = new Date(); today.setHours(0,0,0,0);
+  const diff = Math.floor((today - START) / 864e5);
+  return Math.min(WEEKS, Math.max(1, Math.floor(diff / 7) + 1));
+}
+const h = n => (Math.round(n * 2) / 2).toString().replace(".", ",") + " h";
+/* Termine */
+function parseDate(iso){ const [y, m, d] = iso.split("-").map(Number); return new Date(y, m - 1, d); }
+function isoOf(d){ return d.getFullYear() + "-" + pad(d.getMonth() + 1) + "-" + pad(d.getDate()); }
+function weekOfDate(iso){
+  const diff = Math.floor((parseDate(iso) - START) / 864e5);
+  return diff < 0 ? null : Math.floor(diff / 7) + 1;
+}
+function dayOfDate(iso){ return (parseDate(iso).getDay() + 6) % 7; }   // Mo = 0
+function daysUntil(iso){
+  const t = new Date(); t.setHours(0, 0, 0, 0);
+  return Math.round((parseDate(iso) - t) / 864e5);
+}
+function countdown(iso){
+  const n = daysUntil(iso);
+  return n === 0 ? "heute" : n === 1 ? "morgen" : n > 0 ? "in " + n + " Tagen" : "vor " + (-n) + " Tagen";
+}
+const examsSorted = () => [...state.exams].sort((a, b) => a.date < b.date ? -1 : a.date > b.date ? 1 : 0);
+const examsOfWeek = w => examsSorted().filter(x => weekOfDate(x.date) === w);
+const nextExam = () => examsSorted().find(x => daysUntil(x.date) >= 0);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+const sessOf = w => state.sessions[String(w)] || [];
+const progOf = (w, id) => (state.prog[String(w)] || {})[id] || {h: 0, st: "auto"};
+function setProg(w, id, patch){
+  const k = String(w);
+  const box = state.prog[k] = state.prog[k] || {};
+  box[id] = Object.assign({h: 0, st: "auto"}, box[id], patch);
+}
+function lessonsOf(w, id){
+  let n = 0;
+  timetable(isAWeek(w)).forEach(day => day.forEach(k => { if (baseId(k) === id) n++; }));
+  return n;
+}
+function totals(w){
+  const planned = {}, done = {};
+  SUBJECTS.forEach(s => { planned[s.id] = 0; done[s.id] = 0; });
+  sessOf(w).forEach(x => { planned[x.s] += x.h; });
+  SUBJECTS.forEach(s => {
+    const p = progOf(w, s.id), goal = state.effort[s.id];
+    done[s.id] = p.st === "done" || p.st === "none" ? goal
+               : p.st === "skip" ? 0
+               : Math.min(p.h, goal);
+  });
+  const target = SUBJECTS.reduce((a, s) => a + state.effort[s.id], 0);
+  return {
+    planned, done, target,
+    plannedSum: SUBJECTS.reduce((a, s) => a + planned[s.id], 0),
+    doneSum: SUBJECTS.reduce((a, s) => a + done[s.id], 0),
+    capSum: state.cap.reduce((a, b) => a + b, 0)
+  };
+}
+function dayLoad(w, d){ return sessOf(w).filter(x => x.d === d).reduce((a, x) => a + x.h, 0); }
+/* offen | part | done | none | skip */
+function subjStatus(w, id){
+  const p = progOf(w, id), goal = state.effort[id];
+  if (p.st !== "auto") return p.st;
+  if (goal > 0 && p.h >= goal) return "done";
+  if (p.h > 0) return "part";
+  return "offen";
+}
+const BADGE = {done:"✓", skip:"✕", part:"●", none:"", offen:""};
+
+/* ---------- Ansicht: Lernplan ---------- */
+function viewPlan(){
+  const t = totals(week), tt = timetable(isAWeek(week));
+  const over = t.plannedSum > t.capSum;
+  const pctD = t.target ? Math.min(100, t.doneSum / t.target * 100) : 0;
+  const pctP = t.target ? Math.min(100 - pctD, Math.max(0, (t.plannedSum - t.doneSum)) / t.target * 100) : 0;
+
+  let html = `<section>
+    <div class="bars">
+      <div class="stat"><div class="k">Lernziel Woche</div><div class="v num">${h(t.target)}</div>
+        <div class="meter"><i class="d" style="width:${pctD}%"></i><i class="p" style="width:${pctP}%"></i></div>
+        <div class="k" style="margin-top:6px">${h(t.doneSum)} erledigt · ${h(Math.max(0, t.target - t.doneSum))} offen</div></div>
+      <div class="stat"><div class="k">Verplant</div><div class="v num">${h(t.plannedSum)} <small>/ ${h(t.capSum)} Zeit</small></div>
+        <div class="meter"><i class="${over ? "o" : "p"}" style="width:${t.capSum ? Math.min(100, t.plannedSum / t.capSum * 100) : 0}%"></i></div>
+        <div class="k" style="margin-top:6px">${over ? "Mehr verplant als Zeit vorhanden" : h(Math.max(0, t.capSum - t.plannedSum)) + " frei"}</div></div>
+      <div class="stat"><div class="k">Fächer erledigt</div><div class="v num">${SUBJECTS.filter(s => ["done","none"].includes(subjStatus(week, s.id))).length} <small>/ ${SUBJECTS.length}</small></div>
+        <div class="k" style="margin-top:12px">Woche ${week} von ${WEEKS}</div></div>
+      ${(() => {
+        const n = nextExam();
+        if (!n) return `<div class="stat"><div class="k">Nächster Termin</div><div class="v num">–</div><div class="k" style="margin-top:12px">keine Termine erfasst</div></div>`;
+        return `<div class="stat" style="border-left:3px solid ${TYPES[n.t].color}"><div class="k">Nächster Termin</div>
+          <div class="v num" style="font-size:18px">${countdown(n.date)}</div>
+          <div class="k" style="margin-top:8px;text-transform:none;letter-spacing:0;font-size:12px;color:var(--ink-2)">${esc(TYPES[n.t].label)} · ${esc(SMAP[n.s].name)}<br>${DAYS_S[dayOfDate(n.date)]} ${fmtDate(parseDate(n.date), true)}</div></div>`;
+      })()}
+    </div>
+    ${examsOfWeek(week).length ? `<div class="weekex" style="margin-top:12px">` + examsOfWeek(week).map(x =>
+      `<span class="tag" style="--t:${TYPES[x.t].color}">${esc(TYPES[x.t].label)}: ${esc(SMAP[x.s].name)} <span>${DAYS_S[dayOfDate(x.date)]} ${fmtDate(parseDate(x.date))}</span></span>`).join("") + `</div>` : ""}
+  </section>
+
+  <section>
+    <div class="sechead">
+      <h2>Fächer dieser Woche</h2>
+      <div class="toolbar">
+        <button class="btn mini" id="autofill">Woche automatisch füllen</button>
+        <button class="btn mini" id="clearweek">Woche leeren</button>
+      </div>
+    </div>
+    <div class="hint">Schieber = bereits gearbeitete Stunden (orange, sobald etwas läuft; grüner Haken, sobald dein Aufwandsziel erreicht ist). Über das Menü rechts kannst du ein Fach auch blau als „nichts zu tun“ oder rot als „nicht gemacht“ setzen.</div>
+    <div class="subjlist">`;
+
+  SUBJECTS.forEach(s => {
+    const st = subjStatus(week, s.id), goal = state.effort[s.id], p = progOf(week, s.id);
+    const lek = lessonsOf(week, s.id);
+    const max = Math.max(goal, 0.5);
+    html += `<div class="srow ${st === "done" ? "is-done" : st === "none" ? "is-none" : st === "skip" ? "is-skip" : ""}" style="--c:${s.color}" data-row="${s.id}">
+      <span class="badge ${st}" data-badge="${s.id}" role="img" aria-label="Status: ${st}">${BADGE[st]}</span>
+      <div class="nm">${esc(s.name)} ${lek ? `<em>· ${lek} Lekt.</em>` : `<em>· diese Woche keine Lektion</em>`}</div>
+      <input class="slider" type="range" data-hrs="${s.id}" min="0" max="${max}" step="0.5" value="${Math.min(p.h, max)}"
+        ${p.st === "auto" ? "" : "disabled"} aria-label="Gearbeitete Stunden ${esc(s.name)}">
+      <div class="hrs" data-hlabel="${s.id}">${h(p.h)} / ${h(goal)}</div>
+      <select class="status" data-st="${s.id}" aria-label="Status ${esc(s.name)}">
+        ${STATUS.map(o => `<option value="${o.v}"${o.v === p.st ? " selected" : ""}>${o.label}</option>`).join("")}
+      </select>
+    </div>`;
+  });
+  html += `</div></section>
+
+  <section>
+    <div class="sechead"><h2>Lernblöcke nach Tag</h2></div>
+    <div class="hint">Pro Tag steht dir die in „Fächer &amp; Zeit“ hinterlegte Lernzeit zur Verfügung. Unter jedem Tag siehst du, welche Vorlesungen an diesem Tag laufen.</div>
+    <div class="days">`;
+
+  for (let d = 0; d < 7; d++){
+    const load = dayLoad(week, d), cap = state.cap[d];
+    const list = sessOf(week).filter(x => x.d === d);
+    const dd = new Date(weekStart(week)); dd.setDate(dd.getDate() + d);
+    const lect = d < 6 ? [...new Set(tt[d].filter(Boolean).map(k => SMAP[baseId(k)].abbr))] : [];
+    html += `<div class="day ${load > cap ? "over" : ""}">
+      <div class="dayhead"><b>${DAYS[d]} <span class="num" style="color:var(--ink-3);font-weight:400">${fmtDate(dd)}</span></b>
+        <span class="cap num ${load > cap ? "over" : ""}">${h(load)}/${h(cap)}</span></div>
+      ${lect.length ? `<div class="lect">Unterricht: ${lect.join(" · ")}</div>` : `<div class="lect">kein Unterricht</div>`}
+      <div style="display:grid;gap:5px">`;
+    if (!list.length) html += `<div class="empty">noch nichts geplant</div>`;
+    list.forEach(x => {
+      const s = SMAP[x.s];
+      html += `<div class="sess ${x.done ? "done" : ""}" style="--c:${s.color}">
+        <button class="chk" data-sess="${x.id}" aria-pressed="${x.done}" aria-label="Lernblock erledigt">✓</button>
+        <span class="lbl">${esc(s.name)}</span>
+        <span class="h">${h(x.h)}</span>
+        <button class="x" data-del="${x.id}" aria-label="Lernblock löschen">×</button>
+      </div>`;
+    });
+    html += `</div>
+      <div class="addrow">
+        <select id="sel-${d}" aria-label="Fach für ${DAYS[d]}">${SUBJECTS.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join("")}</select>
+        <input type="number" id="hrs-${d}" value="1" min="0.5" max="12" step="0.5" aria-label="Stunden">
+        <button class="btn mini" data-add="${d}">+</button>
+      </div>
+    </div>`;
+  }
+  html += `</div></section>`;
+  return html;
+}
+
+/* ---------- Ansicht: Stundenplan ---------- */
+function viewTimetable(){
+  const isA = isAWeek(week), tt = timetable(isA);
+  const cells = [];
+  for (let d = 0; d < 6; d++){
+    const col = [];
+    for (let i = 0; i < SLOTS.length; i++){
+      const k = tt[d][i];
+      if (i > 0 && tt[d][i - 1] === k && k !== null){ col.push(null); continue; }
+      if (k === null){ col.push({k: null, span: 1}); continue; }
+      let span = 1; while (i + span < SLOTS.length && tt[d][i + span] === k) span++;
+      col.push({k, span});
+    }
+    cells.push(col);
+  }
+  const todayIdx = (() => {
+    const t = new Date(); t.setHours(0,0,0,0);
+    const a = weekStart(week), diff = Math.floor((t - a) / 864e5);
+    return diff >= 0 && diff < 6 ? diff : -1;
+  })();
+
+  let html = `<section>
+    <div class="sechead">
+      <h2>Stundenplan · Woche ${week}</h2>
+      <div class="hint">Turnus ${isA ? "A" : "B"}: ${isA
+        ? "Montagabend Baustatik 3, Donnerstagmorgen 4 Lektionen Verkehrswesen, Stahlbau nur am Nachmittag."
+        : "Montagabend Massivbau 1, Donnerstag 4 Lektionen Stahlbau (2 vor, 2 nach dem Mittag), Verkehrswesen nur 2 Lektionen."}</div>
+    </div>
+    ${(() => {
+      const ex = examsOfWeek(week);
+      if (!ex.length) return `<div class="weekex"><span class="hint">Diese Woche keine Prüfungen oder Abgaben.</span></div>`;
+      return `<div class="weekex">` + ex.map(x => {
+        const ty = TYPES[x.t];
+        return `<span class="tag" style="--t:${ty.color}">${esc(ty.label)}: ${esc(SMAP[x.s].name)}
+          <span>${DAYS_S[dayOfDate(x.date)]} ${fmtDate(parseDate(x.date))} · ${countdown(x.date)}</span></span>`;
+      }).join("") + `</div>`;
+    })()}
+    <div class="scroller"><table class="tt"><thead><tr><th></th>`;
+  for (let d = 0; d < 6; d++){
+    const dd = new Date(weekStart(week)); dd.setDate(dd.getDate() + d);
+    const dex = examsOfWeek(week).filter(x => dayOfDate(x.date) === d);
+    html += `<th class="${d === todayIdx ? "today" : ""}">${DAYS[d]} <span class="num" style="font-weight:400;color:var(--ink-3)">${fmtDate(dd)}</span>
+      ${dex.map(x => `<br><span class="tag" style="--t:${TYPES[x.t].color}">${esc(TYPES[x.t].short)} · ${esc(SMAP[x.s].abbr)}</span>`).join("")}</th>`;
+  }
+  html += `</tr></thead><tbody>`;
+  for (let i = 0; i < SLOTS.length; i++){
+    html += `<tr><td class="time">${SLOTS[i][0]}–${SLOTS[i][1]}</td>`;
+    for (let d = 0; d < 6; d++){
+      const c = cells[d][i];
+      if (c === null) continue;
+      if (c.k === null){ html += `<td></td>`; continue; }
+      const s = SMAP[baseId(c.k)], lab = c.k.endsWith("*");
+      const from = SLOTS[i][0], to = SLOTS[i + c.span - 1][1];
+      html += `<td rowspan="${c.span}"><div class="lesson" style="--c:${s.color}">
+        <b>${esc(s.name)}${lab ? " · Labor" : ""}</b>
+        <span>${from}–${to} · ${c.span} Lekt.</span>
+      </div></td>`;
+    }
+    html += `</tr>`;
+  }
+  html += `</tbody></table></div>
+    <div class="legend">Nicht besuchte Module (Montagmorgen Informatik/Mathematik, CAD am Mittwochnachmittag) sind bewusst nicht aufgeführt – diese Zeitfenster stehen als Lernzeit zur Verfügung.</div>
+  </section>`;
+  return html;
+}
+
+/* ---------- Ansicht: Prüfungen & Abgaben ---------- */
+function viewExams(){
+  const list = examsSorted();
+  const opts = (sel, obj, key) => Object.entries(obj).map(([k, v]) =>
+    `<option value="${k}"${k === sel ? " selected" : ""}>${esc(v[key] || v.label)}</option>`).join("");
+  const subjOpts = sel => SUBJECTS.map(s => `<option value="${s.id}"${s.id === sel ? " selected" : ""}>${esc(s.name)}</option>`).join("");
+  const firstDay = isoOf(weekStart(week));
+
+  let html = `<section>
+    <div class="sechead"><h2>Neuer Termin</h2>
+      <div class="hint">Erscheint danach automatisch im Stundenplan der passenden Woche.</div></div>
+    <div class="exform">
+      <label>Art<select id="ex-t">${opts("pruefung", TYPES, "label")}</select></label>
+      <label>Fach<select id="ex-s">${subjOpts(SUBJECTS[0].id)}</select></label>
+      <label>Datum<input type="date" id="ex-date" value="${firstDay}" min="${isoOf(START)}"></label>
+      <label>Notiz (optional)<input type="text" id="ex-note" placeholder="z.B. Kapitel 1–4, offene Bücher"></label>
+      <button class="btn primary" id="ex-add">Termin hinzufügen</button>
+    </div>
+  </section>
+
+  <section>
+    <div class="sechead"><h2>Alle Termine</h2>
+      <div class="hint">${list.length ? "Art, Fach und Datum lassen sich jederzeit ändern." : ""}</div></div>`;
+
+  if (!list.length){
+    html += `<div class="exempty">Noch keine Prüfungen oder Abgaben erfasst.</div>`;
+  } else {
+    html += `<div class="exlist">`;
+    list.forEach(x => {
+      const ty = TYPES[x.t], w = weekOfDate(x.date), dd = parseDate(x.date), past = daysUntil(x.date) < 0;
+      html += `<div class="exrow ${past ? "past" : ""}" style="--t:${ty.color}">
+        <div class="when"><b>${DAYS_S[dayOfDate(x.date)]} ${fmtDate(dd, true)}</b>${w && w <= WEEKS ? "Woche " + w : "ausserhalb Semester"} · ${countdown(x.date)}</div>
+        <select data-etype="${x.id}" aria-label="Art ändern">${opts(x.t, TYPES, "label")}</select>
+        <select data-esubj="${x.id}" aria-label="Fach ändern">${subjOpts(x.s)}</select>
+        <input type="date" data-edate="${x.id}" value="${x.date}" aria-label="Datum ändern">
+        <button class="x" data-exdel="${x.id}" aria-label="Termin löschen">×</button>
+        ${x.note ? `<div class="hint" style="grid-column:2 / -1;margin:0">${esc(x.note)}</div>` : ""}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+  html += `</section>`;
+  return html;
+}
+
+/* ---------- Ansicht: Semester ---------- */
+function viewSemester(){
+  let totDone = 0, totTarget = 0;
+  for (let w = 1; w <= WEEKS; w++){
+    const t = totals(w); totDone += t.doneSum; totTarget += t.target;
+  }
+  let html = `<section>
+    <div class="sechead">
+      <h2>Semesterübersicht</h2>
+      <div class="hint">Ein Feld pro Fach und Woche. Ein Klick schaltet weiter: offen → abgeschlossen → nichts zu tun → nicht gemacht → offen.</div>
+    </div>
+    <div class="bars" style="margin-bottom:14px">
+      <div class="stat"><div class="k">Semesterfortschritt</div><div class="v num">${Math.round(totTarget ? totDone / totTarget * 100 : 0)}<small> %</small></div>
+        <div class="meter"><i class="d" style="width:${totTarget ? totDone / totTarget * 100 : 0}%"></i></div>
+        <div class="k" style="margin-top:6px">${h(totDone)} von ${h(totTarget)} Lernstunden</div></div>
+      <div class="stat"><div class="k">Wochen abgeschlossen</div><div class="v num">${Array.from({length: WEEKS}, (_, i) => i + 1).filter(w => SUBJECTS.every(s => ["done","none"].includes(subjStatus(w, s.id)))).length} <small>/ ${WEEKS}</small></div>
+        <div class="k" style="margin-top:12px">aktuell Woche ${currentWeek()}</div></div>
+    </div>
+    <div class="grid-scroll"><table class="sem"><thead><tr><th class="snm">Fach</th>`;
+  for (let w = 1; w <= WEEKS; w++) html += `<th class="${w === week ? "now" : ""}">${w}</th>`;
+  html += `<th>Σ</th></tr></thead><tbody>`;
+  SUBJECTS.forEach(s => {
+    let d = 0;
+    html += `<tr><td class="snm" style="--c:${s.color}">${esc(s.name)}</td>`;
+    for (let w = 1; w <= WEEKS; w++){
+      const st = subjStatus(w, s.id);
+      if (st === "done" || st === "none") d++;
+      html += `<td class="${w === week ? "now" : ""}"><button class="cell ${st === "offen" ? "" : st}" data-cell="${w}:${s.id}" title="${esc(s.name)} · Woche ${w} – klicken zum Weiterschalten" aria-label="${esc(s.name)}, Woche ${w}, Status ${st}">${BADGE[st]}</button></td>`;
+    }
+    html += `<td class="num" style="font-size:11.5px;color:var(--ink-3)">${d}/${WEEKS}</td></tr>`;
+  });
+  html += `</tbody></table></div>
+    <div class="legend">
+      <span><i></i>offen</span><span><i class="part"></i>in Arbeit</span><span><i class="done"></i>abgeschlossen</span><span><i class="none"></i>nichts zu tun</span><span><i class="skip"></i>nicht gemacht</span>
+    </div>
+  </section>`;
+  return html;
+}
+
+/* ---------- Ansicht: Einstellungen ---------- */
+function viewSetup(){
+  const effSum = SUBJECTS.reduce((a, s) => a + state.effort[s.id], 0);
+  const capSum = state.cap.reduce((a, b) => a + b, 0);
+  let html = `<section><div class="cards">
+    <div class="card">
+      <h3>Aufwand pro Fach</h3>
+      <div class="hint">Lernstunden, die du pro Woche für dieses Fach einplanst – Übungen, Nachbereitung, Vorbereitung.</div>`;
+  SUBJECTS.forEach(s => {
+    html += `<div class="setrow"><span class="swatch" style="--c:${s.color}"></span>
+      <span class="lbl">${esc(s.name)}<small>${s.abbr}</small></span>
+      <input type="number" data-eff="${s.id}" value="${state.effort[s.id]}" min="0" max="20" step="0.5" aria-label="Aufwand ${esc(s.name)}"></div>`;
+  });
+  html += `<div class="totalrow"><span>Total pro Woche</span><b>${h(effSum)}</b></div>
+      <div class="totalrow" style="border:0;padding-top:4px"><span>Total Semester (14 Wochen)</span><b>${h(effSum * WEEKS)}</b></div>
+    </div>
+    <div class="card">
+      <h3>Verfügbare Lernzeit</h3>
+      <div class="hint">Wie viele Stunden du an diesem Wochentag neben Unterricht und Weg tatsächlich zum Lernen hast.</div>`;
+  for (let d = 0; d < 7; d++){
+    const tt = timetable(true);
+    const lek = d < 6 ? tt[d].filter(Boolean).length : 0;
+    html += `<div class="setrow"><span class="swatch" style="--c:var(--accent)"></span>
+      <span class="lbl">${DAYS[d]}<small>${d < 6 ? lek + " Lektionen Unterricht" : "unterrichtsfrei"}</small></span>
+      <input type="number" data-cap="${d}" value="${state.cap[d]}" min="0" max="16" step="0.5" aria-label="Lernzeit ${DAYS[d]}"></div>`;
+  }
+  html += `<div class="totalrow"><span>Total pro Woche</span><b>${h(capSum)}</b></div>
+      <div class="totalrow" style="border:0;padding-top:4px;color:${capSum < effSum ? "var(--over)" : "var(--done)"}">
+        <span>${capSum < effSum ? "Zu wenig Zeit für den geplanten Aufwand" : "Zeitbudget reicht für den Aufwand"}</span>
+        <b>${capSum < effSum ? "−" : "+"}${h(Math.abs(capSum - effSum))}</b></div>
+    </div>
+  </div>
+  <div class="card" style="margin-top:14px">
+    <h3>Daten &amp; Sicherung</h3>
+    <div class="hint">Alles, was du einträgst, bleibt dauerhaft in diesem Browser gespeichert – auch nach dem Schliessen. Für mehrere Geräte kannst du zusätzlich einen privaten GitHub-Gist als Ablage verbinden.</div>
+    <div class="toolbar" style="margin-bottom:14px">
+      <button class="btn" id="dataexport">Als Datei sichern</button>
+      <button class="btn" id="dataimport">Datei einlesen</button>
+      <input type="file" id="datafile" accept="application/json,.json" hidden>
+    </div>
+    <div class="setrow" style="grid-template-columns:1fr">
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)">GitHub-Token (Bereich „gist")
+        <input type="password" id="synctoken" value="${esc(lsGet(K_TOKEN) || "")}" placeholder="ghp_…" autocomplete="off"
+          style="width:100%;font-family:'IBM Plex Mono',monospace;margin-top:4px"></label>
+    </div>
+    <div class="setrow" style="grid-template-columns:1fr">
+      <label style="font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)">Gist-ID (wird beim ersten Hochladen selbst erzeugt)
+        <input type="text" id="syncgist" value="${esc(lsGet(K_GIST) || "")}" placeholder="noch nicht verbunden" autocomplete="off"
+          style="width:100%;font-family:'IBM Plex Mono',monospace;margin-top:4px"></label>
+    </div>
+    <div class="toolbar" style="margin-top:12px">
+      <button class="btn primary" id="syncsave">Sync speichern &amp; hochladen</button>
+      <button class="btn" id="syncpull">Vom Gist laden</button>
+      <button class="btn" id="syncoff">Sync trennen</button>
+    </div>
+    <div class="hint" style="margin-top:10px">Status: ${esc(syncMsg || "lokal auf diesem Gerät")}. Token erstellen: github.com/settings/tokens → „Generate new token (classic)" → nur den Haken bei <b>gist</b> setzen. Der Token wird ausschliesslich in deinem Browser gespeichert und direkt an GitHub gesendet.</div>
+  </div>
+
+  <div class="card" style="margin-top:14px">
+    <h3>Semester zurücksetzen</h3>
+    <div class="hint">Löscht alle Lernblöcke und Häkchen aller 14 Wochen. Aufwand und Lernzeiten bleiben erhalten.</div>
+    <button class="btn" id="resetall">Alle Wochen leeren</button>
+  </div></section>`;
+  return html;
+}
+
+/* ---------- Aktionen ---------- */
+function addSession(d, sid, hrs){
+  const k = String(week);
+  (state.sessions[k] = state.sessions[k] || []).push({id: Math.random().toString(36).slice(2, 8), d, s: sid, h: hrs, done: false});
+  save(); render();
+}
+function autofill(){
+  const k = String(week);
+  const sess = state.sessions[k] = state.sessions[k] || [];
+  const t = totals(week);
+  const used = Array.from({length: 7}, (_, d) => dayLoad(week, d));
+  const queue = SUBJECTS
+    .map(s => ({id: s.id, rest: Math.max(0, state.effort[s.id] - t.planned[s.id])}))
+    .filter(x => x.rest > 0).sort((a, b) => b.rest - a.rest);
+  for (const item of queue){
+    let guard = 0;
+    while (item.rest > 0 && guard++ < 20){
+      let best = -1, free = 0;
+      for (let d = 0; d < 7; d++){
+        const f = state.cap[d] - used[d];
+        if (f > free + 0.001){ free = f; best = d; }
+      }
+      if (best < 0 || free < 0.5) break;
+      const chunk = Math.min(item.rest, free, 2);
+      sess.push({id: Math.random().toString(36).slice(2, 8), d: best, s: item.id, h: chunk, done: false});
+      used[best] += chunk; item.rest -= chunk;
+    }
+  }
+  save(); render();
+}
+function onClick(e){
+  if (e.target.id === "ex-add"){
+    const date = document.getElementById("ex-date").value;
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) return;
+    state.exams.push({
+      id: Math.random().toString(36).slice(2, 8),
+      t: document.getElementById("ex-t").value,
+      s: document.getElementById("ex-s").value,
+      date,
+      note: document.getElementById("ex-note").value.trim().slice(0, 120)
+    });
+    save(); render(); return;
+  }
+  const el = e.target.closest("[data-add],[data-del],[data-sess],[data-cell],[data-exdel]");
+  if (!el) return;
+  if (el.dataset.exdel){
+    state.exams = state.exams.filter(x => x.id !== el.dataset.exdel);
+    save(); render(); return;
+  }
+  if (el.dataset.add !== undefined){
+    const d = +el.dataset.add;
+    const sid = document.getElementById("sel-" + d).value;
+    const hrs = Math.max(0.5, Number(document.getElementById("hrs-" + d).value) || 1);
+    addSession(d, sid, hrs); return;
+  }
+  if (el.dataset.del){
+    const k = String(week);
+    state.sessions[k] = sessOf(week).filter(x => x.id !== el.dataset.del);
+    save(); render(); return;
+  }
+  if (el.dataset.sess){
+    const x = sessOf(week).find(y => y.id === el.dataset.sess);
+    if (!x) return;
+    x.done = !x.done;
+    const p = progOf(week, x.s);
+    if (p.st === "auto") setProg(week, x.s, {h: Math.max(0, p.h + (x.done ? x.h : -x.h))});
+    save(); render(); return;
+  }
+  if (el.dataset.cell){
+    const [w, id] = el.dataset.cell.split(":");
+    const cycle = {offen:"done", part:"done", done:"none", none:"skip", skip:"auto"};
+    const next = cycle[subjStatus(+w, id)] || "auto";
+    setProg(+w, id, next === "auto" ? {st: "auto", h: 0} : {st: next});
+    save(); render(); return;
+  }
+}
+function onChange(e){
+  const el = e.target;
+  if (!el.dataset) return;
+  if (el.dataset.eff){
+    state.effort[el.dataset.eff] = Math.max(0, Number(el.value) || 0); save(); render(); return;
+  }
+  if (el.dataset.cap !== undefined && el.dataset.cap !== ""){
+    state.cap[+el.dataset.cap] = Math.max(0, Number(el.value) || 0); save(); render(); return;
+  }
+  if (el.dataset.st){
+    const st = el.value;
+    const patch = st === "auto" ? {st} : {st};
+    setProg(week, el.dataset.st, patch);
+    save(); render(); return;
+  }
+  if (el.dataset.hrs){ save(); render(); return; }
+  const ex = state.exams.find(x => x.id === (el.dataset.etype || el.dataset.esubj || el.dataset.edate));
+  if (!ex) return;
+  if (el.dataset.etype) ex.t = el.value;
+  else if (el.dataset.esubj) ex.s = el.value;
+  else if (/^\d{4}-\d{2}-\d{2}$/.test(el.value)) ex.date = el.value;
+  save(); render();
+}
+/* Schieber live: Zustand und Anzeige sofort, Neuaufbau erst beim Loslassen */
+function onInput(e){
+  const el = e.target;
+  if (!el.dataset || !el.dataset.hrs) return;
+  const id = el.dataset.hrs, val = Number(el.value) || 0;
+  setProg(week, id, {h: val});
+  const st = subjStatus(week, id);
+  const lab = document.querySelector(`[data-hlabel="${id}"]`);
+  if (lab) lab.textContent = h(val) + " / " + h(state.effort[id]);
+  const badge = document.querySelector(`[data-badge="${id}"]`);
+  if (badge){ badge.className = "badge " + st; badge.textContent = BADGE[st]; }
+  const row = document.querySelector(`[data-row="${id}"]`);
+  if (row) row.className = "srow " + (st === "done" ? "is-done" : st === "none" ? "is-none" : st === "skip" ? "is-skip" : "");
+  clearTimeout(onInput.t);
+  onInput.t = setTimeout(save, 500);
+}
+
+/* ---------- Render ---------- */
+function render(){
+  document.getElementById("wtitle").textContent = "Woche " + week;
+  document.getElementById("wdates").textContent = weekRange(week);
+  const ty = document.getElementById("wtype");
+  ty.textContent = "Turnus " + (isAWeek(week) ? "A" : "B");
+  ty.classList.toggle("a", isAWeek(week));
+  document.getElementById("wnow").hidden = week !== currentWeek();
+  document.getElementById("prev").disabled = week <= 1;
+  document.getElementById("next").disabled = week >= WEEKS;
+
+  document.getElementById("view-plan").innerHTML = tab === "plan" ? viewPlan() : "";
+  document.getElementById("view-stundenplan").innerHTML = tab === "stundenplan" ? viewTimetable() : "";
+  document.getElementById("view-pruefungen").innerHTML = tab === "pruefungen" ? viewExams() : "";
+  document.getElementById("view-semester").innerHTML = tab === "semester" ? viewSemester() : "";
+  document.getElementById("view-setup").innerHTML = tab === "setup" ? viewSetup() : "";
+  ["plan","stundenplan","pruefungen","semester","setup"].forEach(t => { document.getElementById("view-" + t).hidden = t !== tab; });
+  document.querySelectorAll(".tab").forEach(b => b.setAttribute("aria-selected", String(b.dataset.tab === tab)));
+
+  const af = document.getElementById("autofill");
+  if (af) af.onclick = autofill;
+  const cw = document.getElementById("clearweek");
+  if (cw) cw.onclick = () => { delete state.sessions[String(week)]; delete state.prog[String(week)]; save(); render(); };
+  const ex = document.getElementById("dataexport");
+  if (ex) ex.onclick = exportData;
+  const im = document.getElementById("dataimport");
+  if (im) im.onclick = () => document.getElementById("datafile").click();
+  const df = document.getElementById("datafile");
+  if (df) df.onchange = e => { if (e.target.files[0]) importData(e.target.files[0]); };
+  const ss = document.getElementById("syncsave");
+  if (ss) ss.onclick = () => {
+    const tok = document.getElementById("synctoken").value.trim();
+    const gid = document.getElementById("syncgist").value.trim();
+    lsSet(K_TOKEN, tok || null); lsSet(K_GIST, gid || null);
+    if (!tok) { flag("lokal auf diesem Gerät"); render(); return; }
+    flag("verbinde…"); pushGist();
+  };
+  const sp = document.getElementById("syncpull");
+  if (sp) sp.onclick = () => {
+    const tok = document.getElementById("synctoken").value.trim();
+    const gid = document.getElementById("syncgist").value.trim();
+    lsSet(K_TOKEN, tok || null); lsSet(K_GIST, gid || null);
+    if (!tok || !gid) { flag("Token und Gist-ID nötig"); return; }
+    flag("lade…"); pullGist(true);
+  };
+  const so = document.getElementById("syncoff");
+  if (so) so.onclick = () => { lsSet(K_TOKEN, null); lsSet(K_GIST, null); flag("Sync getrennt – Daten bleiben lokal"); render(); };
+  const ra = document.getElementById("resetall");
+  if (ra) ra.onclick = () => { if (confirm("Alle Lernblöcke und Häkchen aus allen 14 Wochen löschen?")){ state.sessions = {}; state.prog = {}; save(); render(); } };
+}
+
+document.addEventListener("click", onClick);
+document.addEventListener("change", onChange);
+document.addEventListener("input", onInput);
+document.getElementById("prev").onclick = () => { if (week > 1){ week--; render(); } };
+document.getElementById("next").onclick = () => { if (week < WEEKS){ week++; render(); } };
+document.querySelectorAll(".tab").forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
+document.addEventListener("keydown", e => {
+  if (e.target.matches("input,select,textarea")) return;
+  if (e.key === "ArrowLeft" && week > 1){ week--; render(); }
+  if (e.key === "ArrowRight" && week < WEEKS){ week++; render(); }
+});
+
+week = currentWeek();
+render();
+if (lsGet(K_TOKEN) && lsGet(K_GIST)) pullGist(false);
+</script>
+
+</body>
+</html>
