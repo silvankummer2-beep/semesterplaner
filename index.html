@@ -782,7 +782,7 @@ function viewPlan(){
 
 /* ---------- Ansicht: To-dos ---------- */
 const todoSubj = {};                      // zuletzt gewähltes Fach je Titel
-const gKey = g => g || "_";                // "" = To-dos ohne Titel
+const gKey = id => id || "_";              // "" = To-dos ohne Titel
 function todoRow(x){
   const s = SMAP[x.s];
   return `<div class="todo ${x.done ? "done" : ""}" style="--c:${s ? s.color : "var(--line)"}">
