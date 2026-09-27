@@ -1242,7 +1242,10 @@ function onChange(e){
   if (el.dataset.hrs){ save(); render(); return; }
   if (el.dataset.tgname){
     const g = state.todoGroups.find(x => x.id === el.dataset.tgname);
-    if (g){ g.title = el.value.trim().slice(0, 80) || g.title; el.value = g.title; save(); }
+    if (g){
+      g.title = el.value.trim().slice(0, 80) || g.title; el.value = g.title; save();
+      document.querySelectorAll(`[data-tfg] option[value="${g.id}"]`).forEach(o => { o.textContent = g.title; });
+    }
     return;
   }
   if (el.dataset.tfs || el.dataset.tfg){
