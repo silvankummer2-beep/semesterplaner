@@ -293,6 +293,24 @@ th .tag{margin-top:4px;display:inline-flex}
 .todo.done{background:var(--surface-2)}
 .todo.done .txt{text-decoration:line-through;color:var(--ink-3)}
 .todo.done .tag{opacity:.6}
+.tgroup{margin-top:18px}
+.tghead{display:flex;align-items:center;gap:8px;border-bottom:2px solid var(--line);padding-bottom:4px}
+.tgtitle{
+  flex:1;min-width:0;border:0;background:none;color:var(--ink);padding:2px 0;
+  font-family:"IBM Plex Sans Condensed","IBM Plex Sans",Arial,sans-serif;font-size:18px;font-weight:600;
+}
+.tgtitle:hover{background:var(--surface-2)}
+.tgname{flex:1;font-family:"IBM Plex Sans Condensed",sans-serif;font-size:18px;font-weight:600;color:var(--ink-2)}
+.tghead .cnt{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--ink-3)}
+.tadd{display:flex;gap:6px;margin-top:6px}
+.tadd input{
+  flex:1;min-width:0;font-family:inherit;font-size:13.5px;color:var(--ink);background:transparent;
+  border:1px dashed var(--line);border-radius:8px;padding:7px 10px;
+}
+.tadd input:focus{background:var(--surface);border-style:solid}
+.tadd select{flex:0 1 170px;min-width:0}
+.tadd .btn{min-width:32px}
+@media (max-width:760px){ .tadd select{flex:0 0 108px;width:108px;min-width:0} }
 
 /* semester grid */
 .grid-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--r);background:var(--surface);box-shadow:var(--shadow)}
@@ -448,7 +466,8 @@ const DEFAULTS = () => ({
   sessions: {},
   prog: {},
   exams: [],
-  todos: []
+  todos: [],
+  todoGroups: []
 });
 let state = DEFAULTS();
 let week = 1;
@@ -485,10 +504,16 @@ function sanitize(raw){
       .filter(x => x && SMAP[x.s] && TYPES[x.t] && /^\d{4}-\d{2}-\d{2}$/.test(x.date || ""))
       .map(x => ({id: String(x.id || Math.random().toString(36).slice(2, 8)), t: x.t, s: x.s, date: x.date, note: String(x.note || "").slice(0, 120)}));
   }
+  if (Array.isArray(raw.todoGroups)){
+    s.todoGroups = raw.todoGroups
+      .filter(x => x && x.id && typeof x.title === "string")
+      .map(x => ({id: String(x.id), title: x.title.trim().slice(0, 80) || "Ohne Titel"}));
+  }
+  const gIds = new Set(s.todoGroups.map(x => x.id));
   if (Array.isArray(raw.todos)){
     s.todos = raw.todos
       .filter(x => x && typeof x.text === "string" && x.text.trim())
-      .map(x => ({id: String(x.id || Math.random().toString(36).slice(2, 8)), text: x.text.trim().slice(0, 200), s: SMAP[x.s] ? x.s : "", done: !!x.done}));
+      .map(x => ({id: String(x.id || Math.random().toString(36).slice(2, 8)), text: x.text.trim().slice(0, 200), s: SMAP[x.s] ? x.s : "", g: gIds.has(x.g) ? x.g : "", done: !!x.done}));
   }
   if (raw.done && typeof raw.done === "object"){   // Migration alter Stände
     for (const w in raw.done){
@@ -756,7 +781,8 @@ function viewPlan(){
 }
 
 /* ---------- Ansicht: To-dos ---------- */
-let todoSubj = "";
+const todoSubj = {};                      // zuletzt gewähltes Fach je Titel
+const gKey = g => g || "_";                // "" = To-dos ohne Titel
 function todoRow(x){
   const s = SMAP[x.s];
   return `<div class="todo ${x.done ? "done" : ""}" style="--c:${s ? s.color : "var(--line)"}">
@@ -766,37 +792,63 @@ function todoRow(x){
     <button class="x" data-tododel="${x.id}" aria-label="To-do löschen">×</button>
   </div>`;
 }
+function todoGroup(g){
+  const k = gKey(g.id);
+  const list = state.todos.filter(x => x.g === g.id);
+  const items = [...list.filter(x => !x.done), ...list.filter(x => x.done)];
+  const nOpen = list.filter(x => !x.done).length;
+  return `<div class="tgroup">
+    <div class="tghead">
+      ${g.id ? `<input class="tgtitle" data-tgname="${g.id}" value="${esc(g.title)}" maxlength="80" aria-label="Titel umbenennen">`
+             : `<span class="tgname">${esc(g.title)}</span>`}
+      <span class="cnt">${nOpen}/${list.length}</span>
+      ${g.id ? `<button class="x" data-tgdel="${g.id}" aria-label="Titel löschen">×</button>` : ""}
+    </div>
+    ${items.length ? `<div class="todolist">${items.map(todoRow).join("")}</div>` : ""}
+    <div class="tadd">
+      <input type="text" data-tin="${k}" maxlength="200" placeholder="+ Neues To-do" aria-label="Neues To-do unter ${esc(g.title)}">
+      <select data-tsel="${k}" aria-label="Fach"><option value="">kein Fach</option>${SUBJECTS.map(s =>
+        `<option value="${s.id}"${s.id === todoSubj[k] ? " selected" : ""}>${esc(s.name)}</option>`).join("")}</select>
+      <button class="btn mini" data-tadd="${k}">+</button>
+    </div>
+  </div>`;
+}
 function viewTodos(){
-  const open = state.todos.filter(x => !x.done), done = state.todos.filter(x => x.done);
-  let html = `<section>
-    <div class="sechead"><h2>Neues To-do</h2>
-      <div class="hint">Mit Enter hinzufügen. Das Fach ist optional.</div></div>
+  const loose = state.todos.some(x => !x.g);
+  const groups = [
+    ...(loose || !state.todoGroups.length ? [{id: "", title: state.todoGroups.length ? "Ohne Titel" : "To-dos"}] : []),
+    ...state.todoGroups
+  ];
+  return `<section>
+    <div class="sechead"><h2>Neuer Titel</h2>
+      <div class="hint">Titel gliedern deine Liste, z.B. „Prüfungsvorbereitung“ oder „Projekt Holzbau“. Titel lassen sich direkt anklicken und umbenennen.</div></div>
     <div class="todoform">
-      <input type="text" id="todo-text" maxlength="200" placeholder="z.B. Übungsblatt 3 Baustatik lösen" aria-label="To-do">
-      <select id="todo-s" aria-label="Fach"><option value="">Allgemein</option>${SUBJECTS.map(s =>
-        `<option value="${s.id}"${s.id === todoSubj ? " selected" : ""}>${esc(s.name)}</option>`).join("")}</select>
-      <button class="btn primary" id="todo-add">Hinzufügen</button>
+      <input type="text" id="tg-new" maxlength="80" placeholder="z.B. Prüfungsvorbereitung Baustatik" aria-label="Neuer Titel">
+      <button class="btn primary" id="tg-add">Titel hinzufügen</button>
+      ${state.todos.some(x => x.done) ? `<button class="btn" id="todo-clear">Erledigte löschen</button>` : ""}
     </div>
   </section>
-  <section>
-    <div class="sechead"><h2>Offen <span class="num" style="color:var(--ink-3);font-weight:400">${open.length}</span></h2></div>
-    ${open.length ? `<div class="todolist">${open.map(todoRow).join("")}</div>` : `<div class="exempty">Alles erledigt.</div>`}
-  </section>`;
-  if (done.length) html += `<section>
-    <div class="sechead"><h2>Erledigt <span class="num" style="color:var(--ink-3);font-weight:400">${done.length}</span></h2>
-      <button class="btn mini" id="todo-clear">Erledigte löschen</button></div>
-    <div class="todolist">${done.map(todoRow).join("")}</div>
-  </section>`;
-  return html;
+  <section>${groups.map(todoGroup).join("")}</section>`;
 }
-function addTodo(){
-  const inp = document.getElementById("todo-text");
+function addTodo(k){
+  const inp = document.querySelector(`[data-tin="${k}"]`);
   const text = inp.value.trim().slice(0, 200);
   if (!text) return;
-  todoSubj = document.getElementById("todo-s").value;
-  state.todos.unshift({id: Math.random().toString(36).slice(2, 8), text, s: todoSubj, done: false});
+  todoSubj[k] = document.querySelector(`[data-tsel="${k}"]`).value;
+  state.todos.push({id: Math.random().toString(36).slice(2, 8), text, s: todoSubj[k], g: k === "_" ? "" : k, done: false});
   save(); render();
-  document.getElementById("todo-text").focus();
+  const again = document.querySelector(`[data-tin="${k}"]`);
+  if (again) again.focus();
+}
+function addGroup(){
+  const inp = document.getElementById("tg-new");
+  const title = inp.value.trim().slice(0, 80);
+  if (!title) return;
+  const id = Math.random().toString(36).slice(2, 8);
+  state.todoGroups.push({id, title});
+  save(); render();
+  const first = document.querySelector(`[data-tin="${id}"]`);
+  if (first) first.focus();
 }
 
 /* ---------- Ansicht: Stundenplan ---------- */
@@ -1058,17 +1110,25 @@ function onClick(e){
     });
     save(); render(); return;
   }
-  if (e.target.id === "todo-add"){ addTodo(); return; }
+  if (e.target.id === "tg-add"){ addGroup(); return; }
   if (e.target.id === "todo-clear"){
     state.todos = state.todos.filter(x => !x.done);
     save(); render(); return;
   }
-  const el = e.target.closest("[data-add],[data-del],[data-sess],[data-cell],[data-exdel],[data-todo],[data-tododel]");
+  const el = e.target.closest("[data-add],[data-del],[data-sess],[data-cell],[data-exdel],[data-todo],[data-tododel],[data-tadd],[data-tgdel]");
   if (!el) return;
   if (el.dataset.todo){
     const x = state.todos.find(y => y.id === el.dataset.todo);
     if (x){ x.done = !x.done; save(); render(); }
     return;
+  }
+  if (el.dataset.tadd){ addTodo(el.dataset.tadd); return; }
+  if (el.dataset.tgdel){
+    const id = el.dataset.tgdel, n = state.todos.filter(x => x.g === id).length;
+    if (n && !confirm("Titel und " + n + " To-do" + (n > 1 ? "s" : "") + " darunter löschen?")) return;
+    state.todoGroups = state.todoGroups.filter(x => x.id !== id);
+    state.todos = state.todos.filter(x => x.g !== id);
+    save(); render(); return;
   }
   if (el.dataset.tododel){
     state.todos = state.todos.filter(x => x.id !== el.dataset.tododel);
@@ -1121,6 +1181,12 @@ function onChange(e){
     save(); render(); return;
   }
   if (el.dataset.hrs){ save(); render(); return; }
+  if (el.dataset.tgname){
+    const g = state.todoGroups.find(x => x.id === el.dataset.tgname);
+    if (g){ g.title = el.value.trim().slice(0, 80) || g.title; save(); render(); }
+    return;
+  }
+  if (el.dataset.tsel){ todoSubj[el.dataset.tsel] = el.value; return; }
   const ex = state.exams.find(x => x.id === (el.dataset.etype || el.dataset.esubj || el.dataset.edate));
   if (!ex) return;
   if (el.dataset.etype) ex.t = el.value;
@@ -1206,7 +1272,9 @@ document.getElementById("prev").onclick = () => { if (week > 1){ week--; render(
 document.getElementById("next").onclick = () => { if (week < WEEKS){ week++; render(); } };
 document.querySelectorAll(".tab").forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
 document.addEventListener("keydown", e => {
-  if (e.target.id === "todo-text" && e.key === "Enter"){ e.preventDefault(); addTodo(); return; }
+  if (e.key === "Enter" && e.target.dataset && e.target.dataset.tin){ e.preventDefault(); addTodo(e.target.dataset.tin); return; }
+  if (e.key === "Enter" && e.target.id === "tg-new"){ e.preventDefault(); addGroup(); return; }
+  if (e.key === "Enter" && e.target.dataset && e.target.dataset.tgname){ e.target.blur(); return; }
   if (e.target.matches("input,select,textarea")) return;
   if (e.key === "ArrowLeft" && week > 1){ week--; render(); }
   if (e.key === "ArrowRight" && week < WEEKS){ week++; render(); }
