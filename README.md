@@ -6,6 +6,7 @@ Stundenplan, Lernplanung und Fortschritt für ein 14-wöchiges Bauingenieur-Seme
 
 - **Lernplan** – Aufwand je Fach, Lernblöcke pro Tag, Status je Fach und Woche
   (offen, in Arbeit, abgeschlossen, nichts zu tun, nicht gemacht)
+- **To-dos** – Aufgabenliste zum Abhaken, optional einem Fach zugeordnet
 - **Stundenplan** – Wochenraster mit Turnus A/B (Baustatik/Massivbau am Montag,
   Verkehrswesen/Stahlbau am Donnerstag)
 - **Prüfungen & Abgaben** – Termine mit Art, Fach und Datum; erscheinen in der passenden Woche
