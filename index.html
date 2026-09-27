@@ -285,11 +285,29 @@ th .tag{margin-top:4px;display:inline-flex}
 .todoform select{flex:0 1 210px;padding:7px 6px}
 .todolist{display:grid;gap:6px;margin-top:10px}
 .todo{
-  display:grid;grid-template-columns:20px 1fr auto 30px;align-items:center;gap:10px;
+  display:grid;grid-template-columns:20px 1fr auto 30px 30px;align-items:center;gap:10px;
   background:var(--surface);border:1px solid var(--line);border-left:3px solid var(--c);
   border-radius:8px;padding:8px 10px;
 }
-.todo .txt{overflow-wrap:anywhere}
+.todo .txt{overflow-wrap:anywhere;cursor:text;border-radius:4px;padding:1px 3px;margin:-1px -3px;outline:0}
+.todo .txt:hover{background:var(--surface-2)}
+.todo .txt:focus{background:var(--surface-2);box-shadow:0 0 0 2px var(--accent)}
+.todo .txt.b{font-weight:600}
+.todo .txt.imp{font-weight:600;color:var(--over)}
+.todo .txt.imp::before{content:"! ";}
+.todo .txt.mark{justify-self:start;background:color-mix(in srgb, var(--plan) 32%, transparent);box-decoration-break:clone;-webkit-box-decoration-break:clone}
+.todo .fmt{font-family:"IBM Plex Serif",Georgia,serif;font-size:13px;font-weight:600}
+.todo .fmt[aria-expanded="true"]{color:var(--accent);background:var(--accent-soft)}
+.tedit{
+  grid-column:1 / -1;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:center;
+  border-top:1px solid var(--line-soft);padding-top:8px;margin-top:2px;
+}
+.tedit label{display:flex;align-items:center;gap:6px;font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3)}
+.tedit select{max-width:190px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{border:0;border-left:1px solid var(--line);background:var(--surface);color:var(--ink-2);font:inherit;font-size:12.5px;padding:4px 9px;cursor:pointer}
+.seg button:first-child{border-left:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:#fff}
 .todo.done{background:var(--surface-2)}
 .todo.done .txt{text-decoration:line-through;color:var(--ink-3)}
 .todo.done .tag{opacity:.6}
@@ -460,6 +478,13 @@ const TYPES = {
   zwischen: {label: "Zwischenprüfung", short: "Zwischenpr.", color: "var(--plan)"},
   abgabe:   {label: "Abgabe",          short: "Abgabe",      color: "var(--accent)"}
 };
+/* Stil eines To-dos */
+const TFMT = [
+  {v: "",     label: "Normal"},
+  {v: "b",    label: "Fett"},
+  {v: "imp",  label: "Wichtig"},
+  {v: "mark", label: "Markiert"}
+];
 const DEFAULTS = () => ({
   effort: Object.fromEntries(SUBJECTS.map(s => [s.id, s.effort])),
   cap: [4, 2, 3, 1, 2, 6, 5],
@@ -513,7 +538,7 @@ function sanitize(raw){
   if (Array.isArray(raw.todos)){
     s.todos = raw.todos
       .filter(x => x && typeof x.text === "string" && x.text.trim())
-      .map(x => ({id: String(x.id || Math.random().toString(36).slice(2, 8)), text: x.text.trim().slice(0, 200), s: SMAP[x.s] ? x.s : "", g: gIds.has(x.g) ? x.g : "", done: !!x.done}));
+      .map(x => ({id: String(x.id || Math.random().toString(36).slice(2, 8)), text: x.text.trim().slice(0, 200), s: SMAP[x.s] ? x.s : "", g: gIds.has(x.g) ? x.g : "", f: TFMT.some(f => f.v === x.f) ? x.f : "", done: !!x.done}));
   }
   if (raw.done && typeof raw.done === "object"){   // Migration alter Stände
     for (const w in raw.done){
@@ -783,14 +808,37 @@ function viewPlan(){
 /* ---------- Ansicht: To-dos ---------- */
 const todoSubj = {};                      // zuletzt gewähltes Fach je Titel
 const gKey = id => id || "_";              // "" = To-dos ohne Titel
+let todoEdit = null;                        // To-do mit offenem Format-Menü
 function todoRow(x){
-  const s = SMAP[x.s];
+  const s = SMAP[x.s], open = todoEdit === x.id;
   return `<div class="todo ${x.done ? "done" : ""}" style="--c:${s ? s.color : "var(--line)"}">
     <button class="chk" data-todo="${x.id}" aria-pressed="${x.done}" aria-label="Erledigt">✓</button>
-    <span class="txt">${esc(x.text)}</span>
+    <span class="txt ${x.f}" contenteditable="true" spellcheck="true" data-ttext="${x.id}" role="textbox" aria-label="To-do bearbeiten">${esc(x.text)}</span>
     ${s ? `<span class="tag" style="--t:${s.color}">${esc(s.abbr)}</span>` : `<span></span>`}
+    <button class="x fmt" data-tfmt="${x.id}" aria-expanded="${open}" aria-label="Formatieren" title="Formatieren">Aa</button>
     <button class="x" data-tododel="${x.id}" aria-label="To-do löschen">×</button>
+    ${open ? `<div class="tedit">
+      <span class="seg" role="group" aria-label="Stil">${TFMT.map(f =>
+        `<button data-tstyle="${x.id}:${f.v}" aria-pressed="${x.f === f.v}">${f.label}</button>`).join("")}</span>
+      <label>Fach<select data-tfs="${x.id}"><option value="">kein Fach</option>${SUBJECTS.map(o =>
+        `<option value="${o.id}"${o.id === x.s ? " selected" : ""}>${esc(o.name)}</option>`).join("")}</select></label>
+      <label>Titel<select data-tfg="${x.id}"><option value="">Ohne Titel</option>${state.todoGroups.map(g =>
+        `<option value="${g.id}"${g.id === x.g ? " selected" : ""}>${esc(g.title)}</option>`).join("")}</select></label>
+      <span class="seg" role="group" aria-label="Verschieben">
+        <button data-tmove="${x.id}:-1" aria-label="Nach oben">↑</button><button data-tmove="${x.id}:1" aria-label="Nach unten">↓</button></span>
+      <button class="btn mini" data-tfmt="${x.id}">Fertig</button>
+    </div>` : ""}
   </div>`;
+}
+/* Innerhalb von Titel + Erledigt-Status mit dem Nachbarn tauschen */
+function moveTodo(id, dir){
+  const x = state.todos.find(y => y.id === id);
+  if (!x) return;
+  const peers = state.todos.filter(y => y.g === x.g && y.done === x.done);
+  const other = peers[peers.indexOf(x) + dir];
+  if (!other) return;
+  const a = state.todos.indexOf(x), b = state.todos.indexOf(other);
+  state.todos[a] = other; state.todos[b] = x;
 }
 function todoGroup(g){
   const k = gKey(g.id);
@@ -835,7 +883,7 @@ function addTodo(k){
   const text = inp.value.trim().slice(0, 200);
   if (!text) return;
   todoSubj[k] = document.querySelector(`[data-tsel="${k}"]`).value;
-  state.todos.push({id: Math.random().toString(36).slice(2, 8), text, s: todoSubj[k], g: k === "_" ? "" : k, done: false});
+  state.todos.push({id: Math.random().toString(36).slice(2, 8), text, s: todoSubj[k], g: k === "_" ? "" : k, f: "", done: false});
   save(); render();
   const again = document.querySelector(`[data-tin="${k}"]`);
   if (again) again.focus();
@@ -1115,7 +1163,7 @@ function onClick(e){
     state.todos = state.todos.filter(x => !x.done);
     save(); render(); return;
   }
-  const el = e.target.closest("[data-add],[data-del],[data-sess],[data-cell],[data-exdel],[data-todo],[data-tododel],[data-tadd],[data-tgdel]");
+  const el = e.target.closest("[data-add],[data-del],[data-sess],[data-cell],[data-exdel],[data-todo],[data-tododel],[data-tadd],[data-tgdel],[data-tfmt],[data-tstyle],[data-tmove]");
   if (!el) return;
   if (el.dataset.todo){
     const x = state.todos.find(y => y.id === el.dataset.todo);
@@ -1123,6 +1171,17 @@ function onClick(e){
     return;
   }
   if (el.dataset.tadd){ addTodo(el.dataset.tadd); return; }
+  if (el.dataset.tfmt){ todoEdit = todoEdit === el.dataset.tfmt ? null : el.dataset.tfmt; render(); return; }
+  if (el.dataset.tstyle){
+    const [id, f] = el.dataset.tstyle.split(":");
+    const x = state.todos.find(y => y.id === id);
+    if (x){ x.f = f; save(); render(); }
+    return;
+  }
+  if (el.dataset.tmove){
+    const [id, dir] = el.dataset.tmove.split(":");
+    moveTodo(id, +dir); save(); render(); return;
+  }
   if (el.dataset.tgdel){
     const id = el.dataset.tgdel, n = state.todos.filter(x => x.g === id).length;
     if (n && !confirm("Titel und " + n + " To-do" + (n > 1 ? "s" : "") + " darunter löschen?")) return;
@@ -1183,8 +1242,15 @@ function onChange(e){
   if (el.dataset.hrs){ save(); render(); return; }
   if (el.dataset.tgname){
     const g = state.todoGroups.find(x => x.id === el.dataset.tgname);
-    if (g){ g.title = el.value.trim().slice(0, 80) || g.title; save(); render(); }
+    if (g){ g.title = el.value.trim().slice(0, 80) || g.title; el.value = g.title; save(); }
     return;
+  }
+  if (el.dataset.tfs || el.dataset.tfg){
+    const x = state.todos.find(y => y.id === (el.dataset.tfs || el.dataset.tfg));
+    if (!x) return;
+    if (el.dataset.tfs) x.s = el.value;
+    else { state.todos = state.todos.filter(y => y !== x); x.g = el.value; state.todos.push(x); }
+    save(); render(); return;
   }
   if (el.dataset.tsel){ todoSubj[el.dataset.tsel] = el.value; return; }
   const ex = state.exams.find(x => x.id === (el.dataset.etype || el.dataset.esubj || el.dataset.edate));
@@ -1268,6 +1334,16 @@ function render(){
 document.addEventListener("click", onClick);
 document.addEventListener("change", onChange);
 document.addEventListener("input", onInput);
+document.addEventListener("focusout", e => {
+  const el = e.target;
+  if (!el.dataset || !el.dataset.ttext) return;
+  const x = state.todos.find(y => y.id === el.dataset.ttext);
+  if (!x) return;
+  const text = el.textContent.replace(/\s+/g, " ").trim().slice(0, 200);
+  if (!text){ el.textContent = x.text; return; }
+  if (text !== el.textContent) el.textContent = text;
+  if (text !== x.text){ x.text = text; save(); }
+});
 document.getElementById("prev").onclick = () => { if (week > 1){ week--; render(); } };
 document.getElementById("next").onclick = () => { if (week < WEEKS){ week++; render(); } };
 document.querySelectorAll(".tab").forEach(b => b.onclick = () => { tab = b.dataset.tab; render(); });
@@ -1275,7 +1351,12 @@ document.addEventListener("keydown", e => {
   if (e.key === "Enter" && e.target.dataset && e.target.dataset.tin){ e.preventDefault(); addTodo(e.target.dataset.tin); return; }
   if (e.key === "Enter" && e.target.id === "tg-new"){ e.preventDefault(); addGroup(); return; }
   if (e.key === "Enter" && e.target.dataset && e.target.dataset.tgname){ e.target.blur(); return; }
-  if (e.target.matches("input,select,textarea")) return;
+  if (e.target.dataset && e.target.dataset.ttext && (e.key === "Enter" || e.key === "Escape")){
+    e.preventDefault();
+    if (e.key === "Escape"){ const x = state.todos.find(y => y.id === e.target.dataset.ttext); if (x) e.target.textContent = x.text; }
+    e.target.blur(); return;
+  }
+  if (e.target.matches("input,select,textarea,[contenteditable]")) return;
   if (e.key === "ArrowLeft" && week > 1){ week--; render(); }
   if (e.key === "ArrowRight" && week < WEEKS){ week++; render(); }
 });
